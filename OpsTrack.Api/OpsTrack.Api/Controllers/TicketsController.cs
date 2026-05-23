@@ -19,10 +19,10 @@ public class TicketsController : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<List<Ticket>>> GetTickets(
-    [FromQuery] string? status,
-    [FromQuery] string? priority,
-    [FromQuery] string? assignedTo,
-    [FromQuery] string? search)
+        [FromQuery] string? status,
+        [FromQuery] string? priority,
+        [FromQuery] string? assignedTo,
+        [FromQuery] string? search)
     {
         var query = _context.Tickets.AsQueryable();
 
@@ -61,6 +61,7 @@ public class TicketsController : ControllerBase
 
         return Ok(tickets);
     }
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<Ticket>> GetTicket(int id)
     {
@@ -106,22 +107,39 @@ public class TicketsController : ControllerBase
 
         _context.Tickets.Add(ticket);
         await _context.SaveChangesAsync();
+
+        var performedBy = string.IsNullOrWhiteSpace(ticket.RequesterName)
+            ? "System User"
+            : ticket.RequesterName;
+
         var activityLog = new TicketActivityLog
         {
             TicketId = ticket.Id,
             Action = "Ticket Created",
-            PerformedBy = string.IsNullOrWhiteSpace(ticket.RequesterName)
-        ? "System User"
-        : ticket.RequesterName,
+            PerformedBy = performedBy,
             NewValue = ticket.Status,
             CreatedAt = DateTime.UtcNow
         };
 
+        var notification = new Notification
+        {
+            Title = ticket.Priority == "Critical"
+                ? "Critical ticket created"
+                : "New ticket created",
+            Message = $"{ticket.TicketNumber} was created by {performedBy}.",
+            Type = ticket.Priority == "Critical" ? "Critical" : "Info",
+            TicketId = ticket.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
         _context.TicketActivityLogs.Add(activityLog);
+        _context.Notifications.Add(notification);
+
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetTicket), new { id = ticket.Id }, ticket);
     }
+
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateTicket(int id, UpdateTicketDto request)
     {
@@ -132,6 +150,9 @@ public class TicketsController : ControllerBase
             return NotFound();
         }
 
+        var oldStatus = ticket.Status;
+        var oldAssignee = ticket.AssignedTo;
+
         ticket.Title = request.Title;
         ticket.Description = request.Description;
         ticket.Category = request.Category;
@@ -141,6 +162,40 @@ public class TicketsController : ControllerBase
         ticket.Department = request.Department;
         ticket.AssignedTo = request.AssignedTo;
         ticket.UpdatedAt = DateTime.UtcNow;
+
+        var activityLog = new TicketActivityLog
+        {
+            TicketId = ticket.Id,
+            Action = "Ticket Updated",
+            PerformedBy = "System User",
+            OldValue = oldStatus,
+            NewValue = ticket.Status,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var notification = new Notification
+        {
+            Title = "Ticket updated",
+            Message = $"{ticket.TicketNumber} was updated.",
+            Type = "Update",
+            TicketId = ticket.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.TicketActivityLogs.Add(activityLog);
+        _context.Notifications.Add(notification);
+
+        if (oldAssignee != ticket.AssignedTo && !string.IsNullOrWhiteSpace(ticket.AssignedTo))
+        {
+            _context.Notifications.Add(new Notification
+            {
+                Title = "Ticket assignment changed",
+                Message = $"{ticket.TicketNumber} was assigned to {ticket.AssignedTo}.",
+                Type = "Assignment",
+                TicketId = ticket.Id,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
 
         await _context.SaveChangesAsync();
 
@@ -178,12 +233,14 @@ public class TicketsController : ControllerBase
             return BadRequest("Comment message is required.");
         }
 
+        var authorName = string.IsNullOrWhiteSpace(request.AuthorName)
+            ? "System User"
+            : request.AuthorName;
+
         var comment = new TicketComment
         {
             TicketId = ticket.Id,
-            AuthorName = string.IsNullOrWhiteSpace(request.AuthorName)
-                ? "System User"
-                : request.AuthorName,
+            AuthorName = authorName,
             Message = request.Message,
             CreatedAt = DateTime.UtcNow
         };
@@ -192,8 +249,17 @@ public class TicketsController : ControllerBase
         {
             TicketId = ticket.Id,
             Action = "Comment Added",
-            PerformedBy = comment.AuthorName,
+            PerformedBy = authorName,
             NewValue = request.Message,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var notification = new Notification
+        {
+            Title = "New ticket comment",
+            Message = $"{authorName} commented on {ticket.TicketNumber}.",
+            Type = "Comment",
+            TicketId = ticket.Id,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -201,6 +267,7 @@ public class TicketsController : ControllerBase
 
         _context.TicketComments.Add(comment);
         _context.TicketActivityLogs.Add(activityLog);
+        _context.Notifications.Add(notification);
 
         await _context.SaveChangesAsync();
 
@@ -227,19 +294,33 @@ public class TicketsController : ControllerBase
         ticket.Status = request.Status;
         ticket.UpdatedAt = DateTime.UtcNow;
 
+        var performedBy = string.IsNullOrWhiteSpace(request.PerformedBy)
+            ? "System User"
+            : request.PerformedBy;
+
         var activityLog = new TicketActivityLog
         {
             TicketId = ticket.Id,
             Action = "Status Updated",
-            PerformedBy = string.IsNullOrWhiteSpace(request.PerformedBy)
-                ? "System User"
-                : request.PerformedBy,
+            PerformedBy = performedBy,
             OldValue = oldStatus,
             NewValue = request.Status,
             CreatedAt = DateTime.UtcNow
         };
 
+        var notification = new Notification
+        {
+            Title = "Ticket status updated",
+            Message = $"{ticket.TicketNumber} changed from {oldStatus} to {request.Status}.",
+            Type = request.Status == "Resolved" || request.Status == "Closed"
+                ? "Resolved"
+                : "Status",
+            TicketId = ticket.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
         _context.TicketActivityLogs.Add(activityLog);
+        _context.Notifications.Add(notification);
 
         await _context.SaveChangesAsync();
 
@@ -266,19 +347,31 @@ public class TicketsController : ControllerBase
         ticket.AssignedTo = request.AssignedTo;
         ticket.UpdatedAt = DateTime.UtcNow;
 
+        var performedBy = string.IsNullOrWhiteSpace(request.PerformedBy)
+            ? "System User"
+            : request.PerformedBy;
+
         var activityLog = new TicketActivityLog
         {
             TicketId = ticket.Id,
             Action = "Ticket Assigned",
-            PerformedBy = string.IsNullOrWhiteSpace(request.PerformedBy)
-                ? "System User"
-                : request.PerformedBy,
+            PerformedBy = performedBy,
             OldValue = oldAssignee,
             NewValue = request.AssignedTo,
             CreatedAt = DateTime.UtcNow
         };
 
+        var notification = new Notification
+        {
+            Title = "Ticket assigned",
+            Message = $"{ticket.TicketNumber} was assigned to {request.AssignedTo}.",
+            Type = "Assignment",
+            TicketId = ticket.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
         _context.TicketActivityLogs.Add(activityLog);
+        _context.Notifications.Add(notification);
 
         await _context.SaveChangesAsync();
 

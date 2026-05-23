@@ -1,0 +1,50 @@
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node / React
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+.env.local
+.env.development
+.env.production
+
+# Visual Studio
+.vs/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.ntvs*
+*.njsproj
+*.sw?
+
+# .NET build output
+bin/
+obj/
+
+# ASP.NET publish
+publish/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets
+appsettings.Development.json
