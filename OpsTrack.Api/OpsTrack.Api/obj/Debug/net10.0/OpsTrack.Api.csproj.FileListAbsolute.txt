@@ -496,3 +496,4 @@ C:\No backups\OpsTrack\OpsTrack.Api\OpsTrack.Api\obj\Debug\net10.0\OpsTrack.Api.
 C:\No backups\OpsTrack\OpsTrack.Api\OpsTrack.Api\obj\Debug\net10.0\OpsTrack.Api.genruntimeconfig.cache
 C:\No backups\OpsTrack\OpsTrack.Api\OpsTrack.Api\obj\Debug\net10.0\ref\OpsTrack.Api.dll
 C:\No backups\OpsTrack\OpsTrack.Api\OpsTrack.Api\bin\Debug\net10.0\dotnet-tools.json
+C:\No backups\OpsTrack\OpsTrack.Api\OpsTrack.Api\obj\Debug\net10.0\OpsTrack.Api.sourcelink.json

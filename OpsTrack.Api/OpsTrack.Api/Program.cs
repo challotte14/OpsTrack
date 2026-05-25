@@ -123,7 +123,7 @@ app.MapGet("/db-health", async (OpsTrackDbContext db) =>
 
 // Keep this disabled only if your host's HTTPS is broken.
 // But Netlify will eventually need HTTPS API access.
-// app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.UseCors("AllowReactClient");
 

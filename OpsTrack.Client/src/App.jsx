@@ -74,6 +74,21 @@ const ticketUpdateStatuses = [
 
 const priorities = ["All", "Critical", "High", "Medium", "Low"];
 
+const roleOptions = [
+    {
+        value: "SupportAgent",
+        label: "Support Agent",
+    },
+    {
+        value: "Employee",
+        label: "Employee",
+    },
+    {
+        value: "Admin",
+        label: "Admin",
+    },
+];
+
 const statusStyles = {
     New: "bg-blue-50 text-blue-700 border-blue-200",
     Assigned: "bg-violet-50 text-violet-700 border-violet-200",
@@ -211,6 +226,7 @@ function AuthScreen({ onAuthenticated }) {
     const [mode, setMode] = useState("login");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [roleOpen, setRoleOpen] = useState(false);
 
     const [form, setForm] = useState({
         fullName: "",
@@ -218,6 +234,14 @@ function AuthScreen({ onAuthenticated }) {
         password: "",
         role: "SupportAgent",
     });
+
+    const selectedRole = roleOptions.find((role) => role.value === form.role) || roleOptions[0];
+
+    function switchMode(nextMode) {
+        setMode(nextMode);
+        setError("");
+        setRoleOpen(false);
+    }
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -253,29 +277,29 @@ function AuthScreen({ onAuthenticated }) {
     }
 
     return (
-        <div className="grid min-h-screen place-items-center bg-slate-100 px-4 text-slate-950">
-            <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-7 shadow-xl">
+        <div className="grid min-h-screen place-items-center bg-slate-100 px-4 py-8 text-slate-950">
+            <div className="w-full max-w-md rounded-[32px] border border-slate-200 bg-white p-8 shadow-2xl">
                 <div className="flex items-center gap-3">
-                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-950 text-white">
+                    <div className="grid h-14 w-14 place-items-center rounded-3xl bg-slate-950 text-white shadow-lg">
                         <Wrench className="h-6 w-6" />
                     </div>
 
                     <div>
-                        <h1 className="text-2xl font-black">OpsTrack</h1>
-                        <p className="text-sm font-semibold text-slate-500">
+                        <h1 className="text-3xl font-black tracking-tight">OpsTrack</h1>
+                        <p className="text-sm font-medium text-slate-500">
                             Incident operations portal
                         </p>
                     </div>
                 </div>
 
-                <div className="mt-7 rounded-2xl bg-slate-100 p-1">
+                <div className="mt-8 rounded-2xl bg-slate-100 p-1">
                     <div className="grid grid-cols-2 gap-1">
                         <button
                             type="button"
-                            onClick={() => setMode("login")}
-                            className={`rounded-xl px-4 py-3 text-sm font-bold transition ${mode === "login"
+                            onClick={() => switchMode("login")}
+                            className={`rounded-2xl px-4 py-3 text-sm font-black transition-all ${mode === "login"
                                 ? "bg-white text-slate-950 shadow-sm"
-                                : "text-slate-500"
+                                : "text-slate-500 hover:text-slate-900"
                                 }`}
                         >
                             Login
@@ -283,10 +307,10 @@ function AuthScreen({ onAuthenticated }) {
 
                         <button
                             type="button"
-                            onClick={() => setMode("register")}
-                            className={`rounded-xl px-4 py-3 text-sm font-bold transition ${mode === "register"
+                            onClick={() => switchMode("register")}
+                            className={`rounded-2xl px-4 py-3 text-sm font-black transition-all ${mode === "register"
                                 ? "bg-white text-slate-950 shadow-sm"
-                                : "text-slate-500"
+                                : "text-slate-500 hover:text-slate-900"
                                 }`}
                         >
                             Register
@@ -300,58 +324,150 @@ function AuthScreen({ onAuthenticated }) {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
+                <form onSubmit={handleSubmit} className="mt-7 space-y-5">
                     {mode === "register" && (
                         <>
-                            <input
-                                value={form.fullName}
-                                onChange={(event) =>
-                                    setForm({ ...form, fullName: event.target.value })
-                                }
-                                placeholder="Full name"
-                                className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-                                required
-                            />
+                            <div>
+                                <label className="mb-3 block text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                                    Full Name
+                                </label>
 
-                            <select
-                                value={form.role}
-                                onChange={(event) =>
-                                    setForm({ ...form, role: event.target.value })
-                                }
-                                className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-                            >
-                                <option value="Admin">Admin</option>
-                                <option value="SupportAgent">Support Agent</option>
-                                <option value="Employee">Employee</option>
-                            </select>
+                                <input
+                                    value={form.fullName}
+                                    onChange={(event) =>
+                                        setForm({ ...form, fullName: event.target.value })
+                                    }
+                                    placeholder="Enter your full name"
+                                    className="h-14 w-full rounded-3xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 outline-none transition-all focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-3 block text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                                    Account Role
+                                </label>
+
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => setRoleOpen((previous) => !previous)}
+                                        className={`group flex w-full items-center justify-between rounded-3xl border bg-white px-5 py-4 text-left transition-all duration-200 ${roleOpen
+                                            ? "border-slate-400 ring-4 ring-slate-100"
+                                            : "border-slate-200 hover:border-slate-300"
+                                            }`}
+                                    >
+                                        <div>
+                                            <p className="text-sm font-black text-slate-900">
+                                                {selectedRole.label}
+                                            </p>
+
+                                        </div>
+
+                                        <div
+                                            className={`grid h-9 w-9 place-items-center rounded-full bg-slate-100 transition ${roleOpen ? "rotate-180" : ""
+                                                }`}
+                                        >
+                                            <ChevronRight className="h-4 w-4 rotate-90 text-slate-500" />
+                                        </div>
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {roleOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                                                transition={{ duration: 0.16 }}
+                                                className="absolute left-0 right-0 top-[calc(100%+12px)] z-50 overflow-hidden rounded-3xl border border-slate-200 bg-white p-2 shadow-2xl"
+                                            >
+                                                {roleOptions.map((role) => {
+                                                    const selected = form.role === role.value;
+
+                                                    return (
+                                                        <button
+                                                            key={role.value}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setForm({ ...form, role: role.value });
+                                                                setRoleOpen(false);
+                                                            }}
+                                                            className={`flex w-full items-center justify-between rounded-2xl px-4 py-4 text-left transition ${selected
+                                                                ? "bg-slate-950 text-white"
+                                                                : "hover:bg-slate-100"
+                                                                }`}
+                                                        >
+                                                            <div>
+                                                                <p
+                                                                    className={`text-sm font-black ${selected
+                                                                        ? "text-white"
+                                                                        : "text-slate-900"
+                                                                        }`}
+                                                                >
+                                                                    {role.label}
+                                                                </p>
+
+                                                                <p
+                                                                    className={`mt-1 text-xs ${selected
+                                                                        ? "text-slate-300"
+                                                                        : "text-slate-500"
+                                                                        }`}
+                                                                >
+                                                                    {role.description}
+                                                                </p>
+                                                            </div>
+
+                                                            {selected && (
+                                                                <CheckCircle2 className="h-5 w-5 text-white" />
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
                         </>
                     )}
 
-                    <input
-                        value={form.email}
-                        onChange={(event) =>
-                            setForm({ ...form, email: event.target.value })
-                        }
-                        type="email"
-                        placeholder="Email address"
-                        className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-                        required
-                    />
+                    <div>
+                        <label className="mb-3 block text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                            Email Address
+                        </label>
 
-                    <input
-                        value={form.password}
-                        onChange={(event) =>
-                            setForm({ ...form, password: event.target.value })
-                        }
-                        type="password"
-                        placeholder="Password"
-                        className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-                        required
-                    />
+                        <input
+                            value={form.email}
+                            onChange={(event) =>
+                                setForm({ ...form, email: event.target.value })
+                            }
+                            type="email"
+                            placeholder="Enter your email"
+                            className="h-14 w-full rounded-3xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 outline-none transition-all focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="mb-3 block text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                            Password
+                        </label>
+
+                        <input
+                            value={form.password}
+                            onChange={(event) =>
+                                setForm({ ...form, password: event.target.value })
+                            }
+                            type="password"
+                            placeholder="Enter your password"
+                            className="h-14 w-full rounded-3xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 outline-none transition-all focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
+                            required
+                        />
+                    </div>
 
                     <button
                         disabled={loading}
-                        className="rounded-2xl bg-slate-950 px-5 py-4 font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        className="mt-2 flex h-14 w-full items-center justify-center rounded-3xl bg-slate-950 text-sm font-black text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {loading
                             ? "Please wait..."
@@ -364,7 +480,6 @@ function AuthScreen({ onAuthenticated }) {
         </div>
     );
 }
-
 export default function App() {
     const [currentUser, setCurrentUser] = useState(null);
     const [authChecking, setAuthChecking] = useState(true);
